@@ -14,7 +14,8 @@ func NewRouter(db *sql.DB) *httprouter.Router {
 
 	validate := validator.New()
 
-	servicesProviders := providers.NewServiceProvider(db, validate)
+	repositoryProviders := providers.NewRepositoryProvider(db)
+	servicesProviders := providers.NewServiceProvider(db, repositoryProviders, validate)
 	controllerProviders := providers.NewControllerProvider(servicesProviders)
 
 	router.GET("/health-check", controller.HealthController)

@@ -43,7 +43,7 @@ func (pc *ProductController) CreateProduct(w http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	productServiceResponse := pc.productService.CreateProduct(productCreateRequest)
+	productServiceResponse := pc.productService.CreateProduct(req.Context(), productCreateRequest)
 
 	if productServiceResponse.Status != 201 {
 		w.WriteHeader(productServiceResponse.Status)

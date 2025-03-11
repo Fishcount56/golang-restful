@@ -1,27 +1,31 @@
 package service
 
 import (
+	"context"
 	"database/sql"
 	"restful-api/dto/request"
 	"restful-api/dto/response"
 	"restful-api/helper"
+	"restful-api/repository"
 
 	"github.com/go-playground/validator/v10"
 )
 
 type ProductService struct {
-	DB       *sql.DB
-	validate *validator.Validate
+	DB                *sql.DB
+	productRepository repository.ProductRepository
+	validate          *validator.Validate
 }
 
-func NewProductService(db *sql.DB, validate *validator.Validate) *ProductService {
+func NewProductService(db *sql.DB, productRepository repository.ProductRepository, validate *validator.Validate) *ProductService {
 	return &ProductService{
-		DB:       db,
-		validate: validate,
+		DB:                db,
+		productRepository: productRepository,
+		validate:          validate,
 	}
 }
 
-func (ps *ProductService) CreateProduct(request request.CreateProductRequest) response.CreateProductResponse {
+func (ps *ProductService) CreateProduct(ctx context.Context, request request.CreateProductRequest) response.CreateProductResponse {
 	err := ps.validate.Struct(request)
 
 	if err != nil {
@@ -33,7 +37,7 @@ func (ps *ProductService) CreateProduct(request request.CreateProductRequest) re
 		}
 	}
 
-	tx, err := ps.DB.Begin()
+	tx, err := ps.DB.BeginTx(ctx, nil)
 
 	if err != nil {
 		return response.CreateProductResponse{
@@ -43,7 +47,14 @@ func (ps *ProductService) CreateProduct(request request.CreateProductRequest) re
 	}
 	defer tx.Rollback()
 
-	result, err := tx.Exec("INSERT INTO products (name, type) VALUES (?,?)", request.Name, request.Type)
+	result, err := tx.ExecContext(ctx, "INSERT INTO products (name, type) VALUES (?,?)", request.Name, request.Type)
+
+	if err != nil {
+		return response.CreateProductResponse{
+			Status:  500,
+			Message: "Internal Server Error",
+		}
+	}
 
 	lastInsertedId, err := result.LastInsertId()
 
