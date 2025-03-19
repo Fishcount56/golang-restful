@@ -19,6 +19,7 @@ func NewRouter(db *sql.DB) *httprouter.Router {
 	controllerProviders := providers.NewControllerProvider(servicesProviders)
 
 	router.GET("/health-check", controller.HealthController)
+	router.POST("/enqueue/:id", controller.EnqueueTaskController)
 	router.POST("/product", controllerProviders.ProductController.CreateProduct)
 
 	return router
